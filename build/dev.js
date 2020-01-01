@@ -11,7 +11,19 @@ const devWebpack = require('./webpack.dev.conf');
 
 const configPath = path.join(__dirname, './config.js');
 
-let { devComponent } = require('./config');
+/**
+ * a-bc-d --> aBcD
+ * @param {string} s
+ */
+const camelize = s => s.replace(/-(\w)/g, ($, $1) => $1.toUpperCase());
+
+/**
+ * radio-group --> radio
+ * @param {string} s
+ */
+const getUpper = s => s.replace(/(-[a-z]*)/g, '');
+
+let { componentName } = require('./config').dev;
 
 const componentsInPrototype = ['Modal', 'message', 'notification'];
 
@@ -111,6 +123,7 @@ const generateInstall = components =>
 const renderTemplate = name => {
   const components = {
     Tooltip: 'tooltip', // for DemoBox
+    Icon: 'icon', // Basic
   };
 
   const demoPaths = fs.readdirSync(path.join(__dirname, `../components/${name}/demo`));
@@ -122,15 +135,19 @@ const renderTemplate = name => {
 
     const componentsInDemo = demo.match(/a-(\w+(-\w+)*)/g) || [];
     componentsInDemo.forEach(name => {
-      const componentName = name.replace(/-(\w)/g, ($, $1) => $1.toUpperCase()).replace(/^a/, '');
+      const dirName = name.replace(/^a-/, '');
+      const componentName = camelize(name).replace(/^a/, '');
+      const upperComponentDir = getUpper(dirName);
+      const upperComponentName = upperComponentDir.replace(/^[a-z]/, $ => $.toUpperCase());
 
-      if (componentsInPrototype.includes(componentName)) {
-        return;
-      }
-
-      const componentPath = path.join(__dirname, `../components/${name.replace(/^a-/, '')}`);
+      const componentPath = path.join(__dirname, `../components/${dirName}`);
       if (fs.existsSync(componentPath)) {
-        components[componentName] = name.replace(/^a-/, '');
+        if (componentsInPrototype.includes(componentName)) {
+          return;
+        }
+        components[componentName] = dirName;
+      } else if (fs.existsSync(path.join(__dirname, `../components/${upperComponentDir}`))) {
+        components[upperComponentName] = upperComponentDir;
       }
     });
   });
@@ -150,19 +167,21 @@ const renderTemplate = name => {
 let demoWatcher;
 
 chokidar.watch(configPath, { ignoreInitial: true }).on('change', async () => {
-  devComponent = importFresh(configPath).devComponent;
+  ({ componentName } = importFresh(configPath).dev);
+  process.env.DEV_COMPONENT = componentName;
 
   demoWatcher && (await demoWatcher.close());
 
-  demoWatcher = chokidar.watch(path.join(__dirname, `../components/${devComponent}/demo`));
+  demoWatcher = chokidar.watch(path.join(__dirname, `../components/${componentName}/demo`));
   demoWatcher.on('change', () => {
-    renderTemplate(devComponent);
+    renderTemplate(componentName);
   });
 
-  renderTemplate(devComponent);
+  renderTemplate(componentName);
 });
 
-renderTemplate(devComponent);
+renderTemplate(componentName);
+process.env.DEV_COMPONENT = componentName;
 
 const compiler = webpack(devWebpack);
 
