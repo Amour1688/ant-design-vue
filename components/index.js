@@ -136,7 +136,7 @@ import { default as Skeleton } from './skeleton';
 
 import { default as Comment } from './comment';
 
-import { default as ConfigProvider } from './config-provider';
+// import { default as ConfigProvider } from './config-provider';
 
 import { default as Empty } from './empty';
 
@@ -203,7 +203,7 @@ const components = [
   Drawer,
   Skeleton,
   Comment,
-  ConfigProvider,
+  // ConfigProvider,
   Empty,
   Result,
   Descriptions,
@@ -292,7 +292,7 @@ export {
   Drawer,
   Skeleton,
   Comment,
-  ConfigProvider,
+  // ConfigProvider,
   Empty,
   Result,
   Descriptions,
