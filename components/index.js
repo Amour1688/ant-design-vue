@@ -143,6 +143,7 @@ import { default as Empty } from './empty';
 import { default as Result } from './result';
 
 import { default as Descriptions } from './descriptions';
+
 import { default as PageHeader } from './page-header';
 
 const components = [

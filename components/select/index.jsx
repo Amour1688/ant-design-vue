@@ -1,22 +1,13 @@
-import warning from '../_util/warning';
 import omit from 'omit.js';
-import PropTypes from '../_util/vue-types';
-import { Select as VcSelect, Option, OptGroup } from '../vc-select';
+import classNames from 'classnames';
+import VcSelect, { Option, OptGroup, SelectPropTypes } from '../vc-select';
 import { ConfigConsumerProps } from '../config-provider';
-import {
-  getComponentFromProp,
-  getOptionProps,
-  filterEmpty,
-  isValidElement,
-  getListeners,
-} from '../_util/props-util';
-import CloseOutlined from '@ant-design/icons-vue/CloseOutlined';
-import CloseCircleFilled from '@ant-design/icons-vue/CloseCircleFilled';
-import CheckOutlined from '@ant-design/icons-vue/CheckOutlined';
-import DownOutlined from '@ant-design/icons-vue/DownOutlined';
-import LoadingOutlined from '@ant-design/icons-vue/LoadingOutlined';
-import { cloneElement } from '../_util/vnode';
+import getIcons from './utils/iconUtil';
+import { getOptionProps } from '../_util/props-util';
+import PropTypes from '../_util/vue-types';
 import Base from '../base';
+
+const SECRET_COMBOBOX_MODE_DO_NOT_USE = 'SECRET_COMBOBOX_MODE_DO_NOT_USE';
 
 const AbstractSelectProps = () => ({
   prefixCls: PropTypes.string,
@@ -82,191 +73,139 @@ const SelectProps = {
   menuItemSelectedIcon: PropTypes.any,
 };
 
-const SelectPropTypes = {
-  prefixCls: PropTypes.string,
-  size: PropTypes.oneOf(['default', 'large', 'small']),
-  // combobox: PropTypes.bool,
-  notFoundContent: PropTypes.any,
-  showSearch: PropTypes.bool,
-  optionLabelProp: PropTypes.string,
-  transitionName: PropTypes.string,
-  choiceTransitionName: PropTypes.string,
-};
+// const SelectPropTypes = {
+//   prefixCls: PropTypes.string,
+//   size: PropTypes.oneOf(['default', 'large', 'small']),
+//   // combobox: PropTypes.bool,
+//   notFoundContent: PropTypes.any,
+//   showSearch: PropTypes.bool,
+//   optionLabelProp: PropTypes.string,
+//   transitionName: PropTypes.string,
+//   choiceTransitionName: PropTypes.string,
+// };
 
 export { AbstractSelectProps, SelectValue, SelectProps };
-const SECRET_COMBOBOX_MODE_DO_NOT_USE = 'SECRET_COMBOBOX_MODE_DO_NOT_USE';
+
 const Select = {
+  name: 'ASelect',
   SECRET_COMBOBOX_MODE_DO_NOT_USE,
   Option: { ...Option, name: 'ASelectOption' },
   OptGroup: { ...OptGroup, name: 'ASelectOptGroup' },
-  name: 'ASelect',
   props: {
-    ...SelectProps,
+    ...SelectPropTypes,
     showSearch: PropTypes.bool.def(false),
     transitionName: PropTypes.string.def('slide-up'),
     choiceTransitionName: PropTypes.string.def('zoom'),
   },
-  propTypes: SelectPropTypes,
-  model: {
-    prop: 'value',
-    event: 'change',
-  },
-  provide() {
-    return {
-      savePopupRef: this.savePopupRef,
-    };
-  },
+  SelectPropTypes,
   inject: {
     configProvider: { default: () => ConfigConsumerProps },
   },
-  created() {
-    warning(
-      this.$props.mode !== 'combobox',
-      'Select',
-      'The combobox mode of Select is deprecated,' +
-        'it will be removed in next major version,' +
-        'please use AutoComplete instead',
-    );
-  },
   methods: {
-    getNotFoundContent(renderEmpty) {
-      const h = this.$createElement;
-      const notFoundContent = getComponentFromProp(this, 'notFoundContent');
-      if (notFoundContent !== undefined) {
-        return notFoundContent;
-      }
-      if (this.isCombobox()) {
-        return null;
-      }
-      return renderEmpty(h, 'Select');
-    },
-    savePopupRef(ref) {
-      this.popupRef = ref;
-    },
     focus() {
-      this.$refs.vcSelect.focus();
+      if (this.$refs.selectRef) {
+        this.$refs.selectRef.focus();
+      }
     },
     blur() {
-      this.$refs.vcSelect.blur();
-    },
-
-    isCombobox() {
-      const { mode } = this;
-      return mode === 'combobox' || mode === SECRET_COMBOBOX_MODE_DO_NOT_USE;
-    },
-
-    renderSuffixIcon(prefixCls) {
-      const { loading } = this.$props;
-      let suffixIcon = getComponentFromProp(this, 'suffixIcon');
-      suffixIcon = Array.isArray(suffixIcon) ? suffixIcon[0] : suffixIcon;
-      if (suffixIcon) {
-        return isValidElement(suffixIcon)
-          ? cloneElement(suffixIcon, { class: `${prefixCls}-arrow-icon` })
-          : suffixIcon;
+      if (this.$refs.selectRef) {
+        this.$refs.selectRef.blur();
       }
-      if (loading) {
-        return <LoadingOutlined />;
+    },
+    getMode() {
+      const { mode } = this.$props;
+
+      if (mode === 'combobox') {
+        return undefined;
       }
-      return <DownOutlined class={`${prefixCls}-arrow-icon`} />;
+
+      if (mode === SECRET_COMBOBOX_MODE_DO_NOT_USE) {
+        return 'combobox';
+      }
+
+      return mode;
     },
   },
-  render() {
+  render(h) {
+    const props = getOptionProps(this);
     const {
       prefixCls: customizePrefixCls,
-      size,
-      mode,
-      options,
+      notFoundContent,
+      className,
+      size: customizeSize,
+      listHeight = 256,
+      listItemHeight = 32,
       getPopupContainer,
-      showArrow,
-      ...restProps
-    } = getOptionProps(this);
+      dropdownClassName,
+      bordered,
+    } = props;
 
-    const getPrefixCls = this.configProvider.getPrefixCls;
-    const renderEmpty = this.configProvider.renderEmpty;
+    const { getPrefixCls, renderEmpty, direction } = this.configProvider;
+
     const prefixCls = getPrefixCls('select', customizePrefixCls);
+    const mode = this.getMode();
 
-    const { getPopupContainer: getContextPopupContainer } = this.configProvider;
-    let removeIcon = getComponentFromProp(this, 'removeIcon');
-    removeIcon = Array.isArray(removeIcon) ? removeIcon[0] : removeIcon;
-    let clearIcon = getComponentFromProp(this, 'clearIcon');
-    clearIcon = Array.isArray(clearIcon) ? clearIcon[0] : clearIcon;
-    let menuItemSelectedIcon = getComponentFromProp(this, 'menuItemSelectedIcon');
-    menuItemSelectedIcon = Array.isArray(menuItemSelectedIcon)
-      ? menuItemSelectedIcon[0]
-      : menuItemSelectedIcon;
-    const rest = omit(restProps, [
-      'inputIcon',
-      'removeIcon',
-      'clearIcon',
-      'suffixIcon',
-      'menuItemSelectedIcon',
-    ]);
+    const isMultiple = mode === 'multiple' || mode === 'tags';
 
-    const cls = {
-      [`${prefixCls}-lg`]: size === 'large',
-      [`${prefixCls}-sm`]: size === 'small',
-      [`${prefixCls}-show-arrow`]: showArrow,
-    };
-
-    let { optionLabelProp } = this.$props;
-    if (this.isCombobox()) {
-      // children 带 dom 结构时，无法填入输入框
-      optionLabelProp = optionLabelProp || 'value';
+    // ===================== Empty =====================
+    let mergedNotFound;
+    if (notFoundContent !== undefined) {
+      mergedNotFound = notFoundContent;
+    } else if (mode === 'combobox') {
+      mergedNotFound = null;
+    } else {
+      mergedNotFound = renderEmpty(h, 'Select');
     }
 
-    const modeConfig = {
-      multiple: mode === 'multiple',
-      tags: mode === 'tags',
-      combobox: this.isCombobox(),
-    };
-    const finalRemoveIcon = (removeIcon &&
-      (isValidElement(removeIcon)
-        ? cloneElement(removeIcon, { class: `${prefixCls}-remove-icon` })
-        : removeIcon)) || <CloseOutlined class={`${prefixCls}-remove-icon`} />;
+    // ===================== Icons =====================
+    const { suffixIcon, itemIcon, removeIcon, clearIcon } = getIcons({
+      h,
+      ...props,
+      multiple: isMultiple,
+    });
 
-    const finalClearIcon = (clearIcon &&
-      (isValidElement(clearIcon)
-        ? cloneElement(clearIcon, { class: `${prefixCls}-clear-icon` })
-        : clearIcon)) || <CloseCircleFilled class={`${prefixCls}-clear-icon`} />;
+    const selectProps = omit(props, [
+      'prefixCls',
+      'suffixIcon',
+      'itemIcon',
+      'removeIcon',
+      'clearIcon',
+      'size',
+      'bordered',
+    ]);
 
-    const finalMenuItemSelectedIcon = (menuItemSelectedIcon &&
-      (isValidElement(menuItemSelectedIcon)
-        ? cloneElement(menuItemSelectedIcon, { class: `${prefixCls}-selected-icon` })
-        : menuItemSelectedIcon)) || <CheckOutlined class={`${prefixCls}-selected-icon`} />;
+    const vcSelectRtlDropDownClassName = classNames(dropdownClassName, {
+      [`${prefixCls}-dropdown-${direction}`]: direction === 'rtl',
+    });
 
-    const selectProps = {
-      props: {
-        inputIcon: this.renderSuffixIcon(prefixCls),
-        removeIcon: finalRemoveIcon,
-        clearIcon: finalClearIcon,
-        menuItemSelectedIcon: finalMenuItemSelectedIcon,
-        showArrow,
-        ...rest,
-        ...modeConfig,
-        prefixCls,
-        optionLabelProp: optionLabelProp || 'children',
-        notFoundContent: this.getNotFoundContent(renderEmpty),
-        maxTagPlaceholder: getComponentFromProp(this, 'maxTagPlaceholder'),
-        placeholder: getComponentFromProp(this, 'placeholder'),
-        children: options
-          ? options.map(option => {
-              const { key, label = option.title, on, class: cls, style, ...restOption } = option;
-              return (
-                <Option key={key} {...{ props: restOption, on, class: cls, style }}>
-                  {label}
-                </Option>
-              );
-            })
-          : filterEmpty(this.$slots.default),
-        __propsSymbol__: Symbol(),
-        dropdownRender: getComponentFromProp(this, 'dropdownRender', {}, false),
-        getPopupContainer: getPopupContainer || getContextPopupContainer,
-      },
-      on: getListeners(this),
-      class: cls,
-      ref: 'vcSelect',
-    };
-    return <VcSelect {...selectProps} />;
+    const mergedSize = customizeSize;
+
+    const mergedClassName = classNames(className, {
+      [`${prefixCls}-lg`]: mergedSize === 'large',
+      [`${prefixCls}-sm`]: mergedSize === 'small',
+      [`${prefixCls}-rtl`]: direction === 'rtl',
+      [`${prefixCls}-borderless`]: !bordered,
+    });
+
+    return (
+      <VcSelect
+        ref="selectRef"
+        {...selectProps}
+        listHeight={listHeight}
+        listItemHeight={listItemHeight}
+        mode={mode}
+        prefixCls={prefixCls}
+        direction={direction}
+        inputIcon={suffixIcon}
+        menuItemSelectedIcon={itemIcon}
+        removeIcon={removeIcon}
+        clearIcon={clearIcon}
+        notFoundContent={mergedNotFound}
+        className={mergedClassName}
+        getPopupContainer={getPopupContainer}
+        dropdownClassName={vcSelectRtlDropDownClassName}
+      />
+    );
   },
 };
 
