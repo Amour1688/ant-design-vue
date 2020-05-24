@@ -1,5 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const VueLoaderPlugin = require('vue-loader/dist/plugin').default;
 const webpack = require('webpack');
 const WebpackBar = require('webpackbar');
 const path = require('path');
@@ -21,7 +21,7 @@ module.exports = {
         options: {
           presets: [
             [
-              'env',
+              '@babel/preset-env',
               {
                 targets: {
                   browsers: [
@@ -33,14 +33,16 @@ module.exports = {
                     'Android >= 4',
                   ],
                 },
+                modules: 'cjs',
               },
             ],
           ],
           plugins: [
-            'transform-vue-jsx',
-            'transform-object-assign',
-            'transform-object-rest-spread',
-            'transform-class-properties',
+            '@ant-design-vue/babel-plugin-jsx',
+            '@babel/plugin-transform-object-assign',
+            '@babel/plugin-proposal-object-rest-spread',
+            '@babel/plugin-proposal-export-default-from',
+            '@babel/plugin-proposal-class-properties',
           ],
         },
       },
@@ -54,17 +56,25 @@ module.exports = {
       {
         test: /\.less$/,
         use: [
-          { loader: 'vue-style-loader' },
+          { loader: 'style-loader' },
           {
             loader: 'css-loader',
             options: { sourceMap: true },
           },
-          { loader: 'less-loader', options: { sourceMap: true, javascriptEnabled: true } },
+          {
+            loader: 'less-loader',
+            options: {
+              lessOptions: {
+                sourceMap: true,
+                javascriptEnabled: true,
+              },
+            },
+          },
         ],
       },
       {
         test: /\.css$/,
-        use: ['vue-style-loader', 'css-loader'],
+        use: ['css-loader'],
       },
     ],
   },

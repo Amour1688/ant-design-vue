@@ -3,25 +3,40 @@ const noop = () => {};
 const getTransitionProps = (transitionName, opt = {}) => {
   const { beforeEnter, enter, afterEnter, leave, afterLeave, appear = true, tag, nativeOn } = opt;
   const transitionProps = {
-    props: {
-      appear,
-      css: false,
-    },
-    on: {
-      beforeEnter: beforeEnter || noop,
-      enter:
-        enter ||
-        ((el, done) => {
-          animate(el, `${transitionName}-enter`, done);
-        }),
-      afterEnter: afterEnter || noop,
-      leave:
-        leave ||
-        ((el, done) => {
-          animate(el, `${transitionName}-leave`, done);
-        }),
-      afterLeave: afterLeave || noop,
-    },
+    // props: {
+    //   appear,
+    //   css: false,
+    // },
+    appear,
+    css: false,
+    onBeforeenter: beforeEnter || noop,
+    onEnter:
+      enter ||
+      ((el, done) => {
+        animate(el, `${transitionName}-enter`, done);
+      }),
+    onAfterenter: afterEnter || noop,
+    onLeave:
+      leave ||
+      ((el, done) => {
+        animate(el, `${transitionName}-leave`, done);
+      }),
+    onAftereleave: afterLeave || noop,
+    // on: {
+    //   beforeEnter: beforeEnter || noop,
+    //   enter:
+    //     enter ||
+    //     ((el, done) => {
+    //       animate(el, `${transitionName}-enter`, done);
+    //     }),
+    //   afterEnter: afterEnter || noop,
+    //   leave:
+    //     leave ||
+    //     ((el, done) => {
+    //       animate(el, `${transitionName}-leave`, done);
+    //     }),
+    //   afterLeave: afterLeave || noop,
+    // },
     nativeOn,
   };
   // transition-group

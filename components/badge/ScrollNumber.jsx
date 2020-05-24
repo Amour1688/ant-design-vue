@@ -161,7 +161,7 @@ export default {
       displayComponent,
       className,
     } = this;
-    const getPrefixCls = this.configProvider.getPrefixCls;
+    const getPrefixCls = this.configProvider().getPrefixCls;
     const prefixCls = getPrefixCls('scroll-number', customizePrefixCls);
     if (displayComponent) {
       return cloneElement(displayComponent, {
@@ -172,12 +172,14 @@ export default {
     // fix https://fb.me/react-unknown-prop
     const restProps = omit(this.$props, ['count', 'component', 'prefixCls', 'displayComponent']);
     const newProps = {
-      props: {
-        ...restProps,
-      },
-      attrs: {
-        title,
-      },
+      // props: {
+      //   ...restProps,
+      // },
+      // attrs: {
+      //   title,
+      // },
+      restProps,
+      title,
       style,
       class: classNames(prefixCls, className),
     };
