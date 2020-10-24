@@ -51,6 +51,7 @@ import { Select } from './select/select';
 import { Skeleton } from './skeleton';
 import { Slider } from './slider';
 import { Spin } from './spin';
+import { Space } from './space';
 import { Statistic } from './statistic/statistic';
 import { Steps } from './steps/steps';
 import { Switch } from './switch';
