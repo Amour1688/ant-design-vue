@@ -19,7 +19,7 @@
     "@commitlint/config-conventional": "^8.0.0",
     "@octokit/rest": "^16.0.0",
     "@vue/cli-plugin-eslint": "^4.0.0",
-    "@vue/server-test-utils": "1.0.0-beta.16",
+    "@vue/server-test-utils": "1.3.0",
     "@vue/test-utils": "1.0.0-beta.16",
     "acorn": "^7.0.0",
     "autoprefixer": "^9.6.0",
